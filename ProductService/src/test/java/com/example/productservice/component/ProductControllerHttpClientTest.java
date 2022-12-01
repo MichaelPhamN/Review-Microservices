@@ -4,11 +4,8 @@ import com.example.productservice.constant.URIConstant;
 import com.example.productservice.model.ProductRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,40 +13,42 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ProductControllerOkHttpTest {
+public class ProductControllerHttpClientTest {
     @LocalServerPort
     private int port;
 
     private String baseUrl = "http://localhost";
 
-    private OkHttpClient client;
-
     @BeforeEach
     public void setUp() {
-        client = new OkHttpClient();
         baseUrl = baseUrl.concat(":").concat(port + "");
     }
 
     @Test
-    public void testAddProduct() throws IOException {
+    public void testAddProduct() throws IOException, URISyntaxException, InterruptedException {
         baseUrl = baseUrl.concat(URIConstant.POST);
 
         ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
-        RequestBody body = RequestBody.create(
-                MediaType.parse("application/json"), convertObjectToJson(productRequest));
+        HttpRequest request = HttpRequest.newBuilder()
+                                .uri(new URI(baseUrl))
+                                .header("Content-Type" , "application/json")
+                                .POST(HttpRequest.BodyPublishers.ofString(convertObjectToJson(productRequest)))
+                                .build();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                                .build()
+                                .send(request, HttpResponse.BodyHandlers.ofString());
 
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                .post(body)
-                .build();
-
-        Response response = client.newCall(request).execute();
-        assertEquals(String.valueOf(1), response.body().string());
+        assertEquals(String.valueOf(1), response.body());
     }
 
     @Test
@@ -63,14 +62,15 @@ public class ProductControllerOkHttpTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testGetProducts() throws IOException {
+    public void testGetProducts() throws IOException, URISyntaxException, InterruptedException {
         baseUrl = baseUrl.concat(URIConstant.GET);
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                .get()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(baseUrl))
+                .GET()
                 .build();
-
-        Response response = client.newCall(request).execute();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
 
         String expected = "[{\"productId\":1,\"productName\":\"iPhone X\",\"productDescription\":\"Manufactured by Apple\",\"productType\":\"phone\",\"price\":1499.99,\"quantity\":6}," +
                 "{\"productId\":2,\"productName\":\"Galaxy S10\",\"productDescription\":\"Manufactured by Samsung\",\"productType\":\"phone\",\"price\":1299.99,\"quantity\":3}," +
@@ -78,7 +78,7 @@ public class ProductControllerOkHttpTest {
                 "{\"productId\":4,\"productName\":\"Dell XPS 15\",\"productDescription\":\"Manufactured by Dell\",\"productType\":\"laptop\",\"price\":1799.99,\"quantity\":6}," +
                 "{\"productId\":5,\"productName\":\"HP Envy 13\",\"productDescription\":\"Manufactured by HP\",\"productType\":\"laptop\",\"price\":1299.99,\"quantity\":2}," +
                 "{\"productId\":6,\"productName\":\"Lenovo IdeaCentre 5i Gaming Desktop\",\"productDescription\":\"Manufactured by Lenovo\",\"productType\":\"desktop\",\"price\":999.99,\"quantity\":6}]";
-        assertEquals(expected, response.body().string());
+        assertEquals(expected, response.body());
     }
 
     @Test
@@ -92,19 +92,21 @@ public class ProductControllerOkHttpTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testGetProductsByPriceBetween() throws IOException {
+    public void testGetProductsByPriceBetween() throws IOException, URISyntaxException, InterruptedException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE + "?minPrice=1000&maxPrice=1500");
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                .get()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(baseUrl))
+                .GET()
                 .build();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
 
-        Response response = client.newCall(request).execute();
         String expected = "[{\"productId\":1,\"productName\":\"iPhone X\",\"productDescription\":\"Manufactured by Apple\",\"productType\":\"phone\",\"price\":1499.99,\"quantity\":6}," +
                 "{\"productId\":2,\"productName\":\"Galaxy S10\",\"productDescription\":\"Manufactured by Samsung\",\"productType\":\"phone\",\"price\":1299.99,\"quantity\":3}," +
                 "{\"productId\":3,\"productName\":\"Pixel 5\",\"productDescription\":\"Manufactured by Google\",\"productType\":\"phone\",\"price\":1099.99,\"quantity\":4}," +
                 "{\"productId\":5,\"productName\":\"HP Envy 13\",\"productDescription\":\"Manufactured by HP\",\"productType\":\"laptop\",\"price\":1299.99,\"quantity\":2}]";
-        assertEquals(expected, response.body().string());
+        assertEquals(expected, response.body());
     }
 
     @Test
@@ -118,20 +120,22 @@ public class ProductControllerOkHttpTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testGetProductsByPriceLessThan() throws IOException {
+    public void testGetProductsByPriceLessThan() throws IOException, URISyntaxException, InterruptedException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_LESS_THAN + "?price=1500");
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                .get()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(baseUrl))
+                .GET()
                 .build();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
 
-        Response response = client.newCall(request).execute();
         String expected = "[{\"productId\":1,\"productName\":\"iPhone X\",\"productDescription\":\"Manufactured by Apple\",\"productType\":\"phone\",\"price\":1499.99,\"quantity\":6}," +
                 "{\"productId\":2,\"productName\":\"Galaxy S10\",\"productDescription\":\"Manufactured by Samsung\",\"productType\":\"phone\",\"price\":1299.99,\"quantity\":3}," +
                 "{\"productId\":3,\"productName\":\"Pixel 5\",\"productDescription\":\"Manufactured by Google\",\"productType\":\"phone\",\"price\":1099.99,\"quantity\":4}," +
                 "{\"productId\":5,\"productName\":\"HP Envy 13\",\"productDescription\":\"Manufactured by HP\",\"productType\":\"laptop\",\"price\":1299.99,\"quantity\":2}," +
                 "{\"productId\":6,\"productName\":\"Lenovo IdeaCentre 5i Gaming Desktop\",\"productDescription\":\"Manufactured by Lenovo\",\"productType\":\"desktop\",\"price\":999.99,\"quantity\":6}]";
-        assertEquals(expected, response.body().string());
+        assertEquals(expected, response.body());
     }
 
     @Test
@@ -145,20 +149,22 @@ public class ProductControllerOkHttpTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testGetProductsByPriceGreaterThan() throws IOException {
+    public void testGetProductsByPriceGreaterThan() throws IOException, URISyntaxException, InterruptedException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_GREATER_THAN + "?price=1000");
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                .get()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(baseUrl))
+                .GET()
                 .build();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
 
-        Response response = client.newCall(request).execute();
         String expected = "[{\"productId\":1,\"productName\":\"iPhone X\",\"productDescription\":\"Manufactured by Apple\",\"productType\":\"phone\",\"price\":1499.99,\"quantity\":6}," +
                 "{\"productId\":2,\"productName\":\"Galaxy S10\",\"productDescription\":\"Manufactured by Samsung\",\"productType\":\"phone\",\"price\":1299.99,\"quantity\":3}," +
                 "{\"productId\":3,\"productName\":\"Pixel 5\",\"productDescription\":\"Manufactured by Google\",\"productType\":\"phone\",\"price\":1099.99,\"quantity\":4}," +
                 "{\"productId\":4,\"productName\":\"Dell XPS 15\",\"productDescription\":\"Manufactured by Dell\",\"productType\":\"laptop\",\"price\":1799.99,\"quantity\":6}," +
                 "{\"productId\":5,\"productName\":\"HP Envy 13\",\"productDescription\":\"Manufactured by HP\",\"productType\":\"laptop\",\"price\":1299.99,\"quantity\":2}]";
-        assertEquals(expected, response.body().string());
+        assertEquals(expected, response.body());
     }
 
     @Test
@@ -172,17 +178,18 @@ public class ProductControllerOkHttpTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testGetProductById() throws IOException {
+    public void testGetProductById() throws IOException, URISyntaxException, InterruptedException {
         baseUrl = baseUrl.concat("/api/product/3");
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                .get()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(baseUrl))
+                .GET()
                 .build();
-
-        Response response = client.newCall(request).execute();
+        HttpResponse<String> response = HttpClient.newBuilder()
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
 
         String expected = "{\"productId\":3,\"productName\":\"Pixel 5\",\"productDescription\":\"Manufactured by Google\",\"productType\":\"phone\",\"price\":1099.99,\"quantity\":4}";
-        assertEquals(expected, response.body().string());
+        assertEquals(expected, response.body());
     }
 
     //convert Object to Json using ObjectMapper

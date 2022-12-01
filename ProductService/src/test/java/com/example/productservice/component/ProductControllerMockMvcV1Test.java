@@ -1,7 +1,6 @@
 package com.example.productservice.component;
 
 import com.example.productservice.constant.URIConstant;
-import com.example.productservice.entity.Product;
 import com.example.productservice.model.ProductRequest;
 import com.example.productservice.model.ProductResponse;
 import com.example.productservice.service.impl.ProductServiceImpl;

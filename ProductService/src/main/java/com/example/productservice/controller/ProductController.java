@@ -95,61 +95,61 @@ public class ProductController {
         return new ResponseEntity<>(productId, HttpStatus.CREATED);
     }
 
-//    @PostMapping(URIConstant.POST_ALL)
-//    public ResponseEntity<List<Product>> addProducts(@RequestBody List<Product> products) {
-//        if(products == null) {
-//            log.warn("List product is null");
-//            throw new BadRequest400Exception("List product is null.");
-//        }
-//
-//        List<Product> productList = productService.addProducts(products);
-//        if (productList.size() < 1) {
-//            log.warn("Inserted product failed");
-//            throw new BadRequest400Exception("Inserted product failed.");
-//        }
-//
-//        return new ResponseEntity<>(productList, HttpStatus.CREATED);
-//    }
+    @PostMapping(URIConstant.POST_ALL)
+    public ResponseEntity<List<ProductResponse>> addProducts(@RequestBody List<ProductRequest> products) {
+        if(products == null) {
+            log.warn("List product is null");
+            throw new BadRequest400Exception("List product is null.");
+        }
 
-//    @PutMapping(URIConstant.PUT)
-//    public ResponseEntity<Product> editProduct(@RequestBody Product product) {
-//        if(product == null
-//                || product.getProductId() < 0
-//                || product.getProductName() == null
-//                || product.getProductName().length() == 0
-//                || product.getProductType() == null
-//                || product.getProductType().length() == 0
-//                || product.getPrice() < 0
-//                || product.getQuantity() < 0) {
-//            log.warn("Product {} is invalid", product);
-//            throw new BadRequest400Exception("Product data is invalid.");
-//        }
-//
-//        return new ResponseEntity<>(productService.editProduct(product, product.getProductId()), HttpStatus.OK);
-//    }
+        List<ProductResponse> productList = productService.addProducts(products);
+        if (productList.size() < 1) {
+            log.warn("Inserted product failed");
+            throw new BadRequest400Exception("Inserted product failed.");
+        }
 
-//    @DeleteMapping(URIConstant.DELETE_BY_ID)
-//    public ResponseEntity<String> deleteProductById(@PathVariable long id) {
-//        if(id < 0) {
-//            log.warn("Product Id: {} is invalid", id);
-//            throw new BadRequest400Exception("Product data is invalid.");
-//        }
-//        return new ResponseEntity<>(productService.deleteProductById(id), HttpStatus.OK);
-//    }
+        return new ResponseEntity<>(productList, HttpStatus.CREATED);
+    }
 
-//    @DeleteMapping(URIConstant.DELETE_LIST)
-//    public ResponseEntity<String> deleteListProducts(@RequestBody List<Long> ids) {
-//        if(ids.size() < 1) {
-//            log.warn("List product id is invalid");
-//            throw new BadRequest400Exception("List product id is invalid.");
-//        }
-//        return new ResponseEntity<>(productService.deleteListProducts(ids), HttpStatus.OK);
-//    }
+    @PutMapping(URIConstant.PUT)
+    public ResponseEntity<ProductResponse> editProduct(@RequestBody ProductRequest productRequest, @PathVariable long productId) {
+        if(productRequest == null
+                || productId < 0
+                || productRequest.getName() == null
+                || productRequest.getName().length() == 0
+                || productRequest.getType() == null
+                || productRequest.getType().length() == 0
+                || productRequest.getPrice() < 0
+                || productRequest.getQuantity() < 0) {
+            log.warn("Product {} is invalid", productRequest);
+            throw new BadRequest400Exception("Product data is invalid.");
+        }
 
-//    @DeleteMapping(URIConstant.DELETE_ALL)
-//    public ResponseEntity<String> deleteAllProducts() {
-//        return new ResponseEntity<>(productService.deleteAllProducts(), HttpStatus.OK);
-//    }
+        return new ResponseEntity<>(productService.editProduct(productRequest, productId), HttpStatus.OK);
+    }
+
+    @DeleteMapping(URIConstant.DELETE_BY_ID)
+    public ResponseEntity<String> deleteProductById(@PathVariable long id) {
+        if(id < 0) {
+            log.warn("Product Id: {} is invalid", id);
+            throw new BadRequest400Exception("Product data is invalid.");
+        }
+        return new ResponseEntity<>(productService.deleteProductById(id), HttpStatus.OK);
+    }
+
+    @DeleteMapping(URIConstant.DELETE_LIST)
+    public ResponseEntity<String> deleteListProducts(@RequestBody List<Long> ids) {
+        if(ids.size() < 1) {
+            log.warn("List product id is invalid");
+            throw new BadRequest400Exception("List product id is invalid.");
+        }
+        return new ResponseEntity<>(productService.deleteListProducts(ids), HttpStatus.OK);
+    }
+
+    @DeleteMapping(URIConstant.DELETE_ALL)
+    public ResponseEntity<String> deleteAllProducts() {
+        return new ResponseEntity<>(productService.deleteAllProducts(), HttpStatus.OK);
+    }
 
 //    @GetMapping(URIConstant.CHECK_BY_ID)
 //    public ResponseEntity<Boolean> checkProductByProductId(@PathVariable long id) {
@@ -159,7 +159,7 @@ public class ProductController {
 //        }
 //        return new ResponseEntity<>(productService.checkProductByProductId(id), HttpStatus.OK);
 //    }
-
+//
 //    @GetMapping(URIConstant.CHECK_BY_NAME)
 //    public ResponseEntity<Boolean> checkProductByProductId(@RequestParam String productName) {
 //        if(productName.length() < 1) {

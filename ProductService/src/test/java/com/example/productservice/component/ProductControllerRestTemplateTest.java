@@ -1,10 +1,10 @@
 package com.example.productservice.component;
 
 import com.example.productservice.constant.URIConstant;
-import com.example.productservice.entity.Product;
 import com.example.productservice.model.ProductRequest;
 import com.example.productservice.model.ProductResponse;
 import com.example.productservice.repository.TestH2Repository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,7 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.client.RestTemplate;
@@ -36,6 +39,8 @@ public class ProductControllerRestTemplateTest {
     @Autowired
     private TestH2Repository h2Repository;
 
+    private HttpHeaders headers;
+
     @BeforeAll
     public static void init() {
         restTemplate = new RestTemplate();
@@ -43,10 +48,12 @@ public class ProductControllerRestTemplateTest {
 
     @BeforeEach
     public void setUp() {
+        headers = new HttpHeaders();
         baseUrl = baseUrl.concat(":").concat(port + "");
     }
 
     @Test
+    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id = 1", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testAddProduct() {
         baseUrl = baseUrl.concat(URIConstant.POST);
         ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
@@ -64,6 +71,60 @@ public class ProductControllerRestTemplateTest {
     }
 
     @Test
+    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id = 2", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    public void testAddProductPassingJsonType() throws JsonProcessingException {
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        baseUrl = baseUrl.concat(URIConstant.POST);
+
+        ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
+
+        //Clarify that passing a json type data
+        HttpEntity<String> request = new HttpEntity<>(convertObjectToJson(productRequest), headers);
+
+        long productId = restTemplate.postForObject(baseUrl, request, Long.class);
+        assertEquals(2, productId);
+        assertAll(
+                () -> assertNotNull(h2Repository.findAll().get(0)),
+                () -> assertEquals(2, h2Repository.findAll().get(0).getProductId()),
+                () -> assertEquals("iPhone X", h2Repository.findAll().get(0).getProductName()),
+                () -> assertEquals("Manufactured by Apple", h2Repository.findAll().get(0).getProductDescription()),
+                () -> assertEquals("phone", h2Repository.findAll().get(0).getProductType()),
+                () -> assertEquals(1499.99, h2Repository.findAll().get(0).getPrice()),
+                () -> assertEquals(6, h2Repository.findAll().get(0).getQuantity())
+        );
+    }
+
+//    @Test
+//    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id = 1", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+//    public void testAddProductMappingJackson2HttpMessageConverter() {
+//        baseUrl = baseUrl.concat(URIConstant.POST);
+//        ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
+//        restTemplate.setMessageConverters(getJsonMessageConverters());
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+//        HttpEntity<ProductRequest> request = new HttpEntity<>(productRequest, headers);
+//
+//        long productId = restTemplate.postForObject(baseUrl, request, Long.class);
+//
+//        assertEquals(1, productId);
+//        assertAll(
+//                () -> assertNotNull(h2Repository.findAll().get(0)),
+//                () -> assertEquals(1, h2Repository.findAll().get(0).getProductId()),
+//                () -> assertEquals("iPhone X", h2Repository.findAll().get(0).getProductName()),
+//                () -> assertEquals("Manufactured by Apple", h2Repository.findAll().get(0).getProductDescription()),
+//                () -> assertEquals("phone", h2Repository.findAll().get(0).getProductType()),
+//                () -> assertEquals(1499.99, h2Repository.findAll().get(0).getPrice()),
+//                () -> assertEquals(6, h2Repository.findAll().get(0).getQuantity())
+//        );
+//    }
+//
+//    private List<HttpMessageConverter<?>> getJsonMessageConverters() {
+//        List<HttpMessageConverter<?>> converters = new ArrayList<>();
+//        converters.add(new MappingJackson2HttpMessageConverter());
+//        return converters;
+//    }
+
+    @Test
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
                             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
                             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -76,7 +137,7 @@ public class ProductControllerRestTemplateTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProducts() {
         baseUrl = baseUrl.concat(URIConstant.GET);
-        List<ProductResponse> productResponses = convertJsonToObjects(restTemplate.getForObject(baseUrl, List.class));
+        List<ProductResponse> productResponses = convertJsonToObject(restTemplate.getForObject(baseUrl, List.class));
         assertNotNull(productResponses);
         assertEquals(6, productResponses.size());
         assertAll(
@@ -149,7 +210,7 @@ public class ProductControllerRestTemplateTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceBetween() {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE + "?minPrice=1000&maxPrice=1500");
-        List<ProductResponse> productResponses = convertJsonToObjects(restTemplate.getForObject(baseUrl, List.class));
+        List<ProductResponse> productResponses = convertJsonToObject(restTemplate.getForObject(baseUrl, List.class));
         assertNotNull(productResponses);
         assertEquals(4, productResponses.size());
         assertAll(
@@ -204,7 +265,7 @@ public class ProductControllerRestTemplateTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceLessThan() {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_LESS_THAN + "?price=1500");
-        List<ProductResponse> productResponses = convertJsonToObjects(restTemplate.getForObject(baseUrl, List.class));
+        List<ProductResponse> productResponses = convertJsonToObject(restTemplate.getForObject(baseUrl, List.class));
         assertNotNull(productResponses);
         assertEquals(5, productResponses.size());
         assertAll(
@@ -268,7 +329,7 @@ public class ProductControllerRestTemplateTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceGreaterThan() {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_GREATER_THAN + "?price=1000");
-        List<ProductResponse> productResponses = convertJsonToObjects(restTemplate.getForObject(baseUrl, List.class));
+        List<ProductResponse> productResponses = convertJsonToObject(restTemplate.getForObject(baseUrl, List.class));
         assertNotNull(productResponses);
         assertEquals(5, productResponses.size());
         assertAll(
@@ -331,7 +392,7 @@ public class ProductControllerRestTemplateTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testFindProductById() {
+    public void testGetProductById() {
         baseUrl = baseUrl.concat(URIConstant.GET_BY_ID);
         ProductResponse productResponse = restTemplate.getForObject(baseUrl, ProductResponse.class, 3);
         assertAll(
@@ -356,7 +417,7 @@ public class ProductControllerRestTemplateTest {
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testFindProductById_ResponseEntity() {
+    public void testGetProductById_ResponseEntity() {
         ResponseEntity<ProductResponse> productResponse = restTemplate.getForEntity(baseUrl + "/api/product/3", ProductResponse.class);
         assertAll(
                 () -> assertNotNull(productResponse),
@@ -372,9 +433,15 @@ public class ProductControllerRestTemplateTest {
     }
 
     //convert JSON to Object using ObjectMapper
-    private List<ProductResponse> convertJsonToObjects(List<ProductResponse> productResponses) {
+    private List<ProductResponse> convertJsonToObject(List<ProductResponse> productResponses) {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.convertValue(productResponses, new TypeReference<>() {});
+    }
+
+    //convert JSON to Object using ObjectMapper
+    private String convertObjectToJson(ProductRequest productRequest) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(productRequest);
     }
 }
 
