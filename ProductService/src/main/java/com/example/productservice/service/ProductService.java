@@ -27,4 +27,5 @@ public interface ProductService {
     double total();
     boolean checkProductByProductId(long productId);
     boolean checkProductByProductName(String productName);
+    void reduceQuantity(long productId, long quantity);
 }

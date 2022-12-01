@@ -303,4 +303,9 @@ public class ProductServiceImpl implements ProductService {
         log.info("Product with name {} is {} existed", productName, isExisted ? "" : "not");
         return isExisted;
     }
+
+    @Override
+    public void reduceQuantity(long productId, long quantity) {
+
+    }
 }

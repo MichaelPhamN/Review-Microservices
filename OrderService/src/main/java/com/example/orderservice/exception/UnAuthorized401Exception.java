@@ -1,0 +1,7 @@
+package com.example.orderservice.exception;
+
+public class UnAuthorized401Exception extends RuntimeException{
+    public UnAuthorized401Exception(String description) {
+        super(description);
+    }
+}
