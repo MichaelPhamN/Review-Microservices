@@ -14,5 +14,5 @@ spring:
     open-in-view: true
   application:
     name: PRODUCT-SERVICE
-  config:
-    import: optional:configserver:http://localhost:9296
+#  config:
+#    import: optional:configserver:http://localhost:9296

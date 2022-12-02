@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ProductControllerHttpClientAsyncTest {
     @LocalServerPort
     private int port;
@@ -38,7 +40,9 @@ public class ProductControllerHttpClientAsyncTest {
     }
 
     @Test
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id = 1", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testAddProductCompletableFutureV1() throws IOException, URISyntaxException {
         baseUrl = baseUrl.concat(URIConstant.POST);
 
@@ -59,7 +63,9 @@ public class ProductControllerHttpClientAsyncTest {
     }
 
     @Test
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id = 2", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testAddProductCompletableFutureV2() throws IOException, URISyntaxException, ExecutionException, InterruptedException {
         baseUrl = baseUrl.concat(URIConstant.POST);
 
@@ -77,10 +83,12 @@ public class ProductControllerHttpClientAsyncTest {
                 .executor(executorService)
                 .build().sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(String.valueOf(2), response.get().body());
+        assertEquals(String.valueOf(1), response.get().body());
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
                             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
                             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -89,8 +97,7 @@ public class ProductControllerHttpClientAsyncTest {
                             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
                             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProducts() throws IOException, URISyntaxException, InterruptedException, ExecutionException {
         baseUrl = baseUrl.concat(URIConstant.GET);
         HttpRequest request = HttpRequest.newBuilder()
@@ -133,6 +140,8 @@ public class ProductControllerHttpClientAsyncTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -141,8 +150,7 @@ public class ProductControllerHttpClientAsyncTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceBetween() throws IOException, URISyntaxException, InterruptedException, ExecutionException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE + "?minPrice=1000&maxPrice=1500");
         HttpRequest request = HttpRequest.newBuilder()
@@ -183,6 +191,8 @@ public class ProductControllerHttpClientAsyncTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -191,8 +201,7 @@ public class ProductControllerHttpClientAsyncTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceLessThan() throws IOException, URISyntaxException, InterruptedException, ExecutionException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_LESS_THAN + "?price=1500");
         HttpRequest request = HttpRequest.newBuilder()
@@ -234,6 +243,8 @@ public class ProductControllerHttpClientAsyncTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -242,8 +253,7 @@ public class ProductControllerHttpClientAsyncTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceGreaterThan() throws IOException, URISyntaxException, InterruptedException, ExecutionException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_GREATER_THAN + "?price=1000");
         HttpRequest request = HttpRequest.newBuilder()
@@ -285,6 +295,8 @@ public class ProductControllerHttpClientAsyncTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -293,8 +305,7 @@ public class ProductControllerHttpClientAsyncTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductById() throws IOException, URISyntaxException, InterruptedException, ExecutionException {
         baseUrl = baseUrl.concat("/api/product/3");
         HttpRequest request = HttpRequest.newBuilder()

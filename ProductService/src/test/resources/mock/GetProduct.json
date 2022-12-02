@@ -1,8 +1,1 @@
-{
-  "productId":3,
-  "productName":"Pixel 5",
-  "productDescription":"Manufactured by Google",
-  "productType":"phone",
-  "price":1099.99,
-  "quantity":4
-}
+{"productId":3,"productName":"Pixel 5","productDescription":"Manufactured by Google","productType":"phone","price":1099.99,"quantity":4}

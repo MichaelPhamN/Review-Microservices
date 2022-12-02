@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ProductControllerOkHttpTest {
     @LocalServerPort
     private int port;
@@ -36,6 +38,9 @@ public class ProductControllerOkHttpTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testAddProduct() throws IOException {
         baseUrl = baseUrl.concat(URIConstant.POST);
 
@@ -53,6 +58,8 @@ public class ProductControllerOkHttpTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
                             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
                             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -61,8 +68,7 @@ public class ProductControllerOkHttpTest {
                             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
                             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProducts() throws IOException {
         baseUrl = baseUrl.concat(URIConstant.GET);
         Request request = new Request.Builder()
@@ -82,6 +88,8 @@ public class ProductControllerOkHttpTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -90,8 +98,7 @@ public class ProductControllerOkHttpTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceBetween() throws IOException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE + "?minPrice=1000&maxPrice=1500");
         Request request = new Request.Builder()
@@ -108,6 +115,8 @@ public class ProductControllerOkHttpTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -116,8 +125,7 @@ public class ProductControllerOkHttpTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceLessThan() throws IOException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_LESS_THAN + "?price=1500");
         Request request = new Request.Builder()
@@ -135,6 +143,8 @@ public class ProductControllerOkHttpTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -143,8 +153,7 @@ public class ProductControllerOkHttpTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductsByPriceGreaterThan() throws IOException {
         baseUrl = baseUrl.concat(URIConstant.GET_PRODUCT_BY_PRICE_GREATER_THAN + "?price=1000");
         Request request = new Request.Builder()
@@ -162,6 +171,8 @@ public class ProductControllerOkHttpTest {
     }
 
     @Test
+    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
             "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
             "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
@@ -170,8 +181,7 @@ public class ProductControllerOkHttpTest {
             "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
             "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
             executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DELETE FROM PRODUCT WHERE product_id IN (1,2,3,4,5,6)",
-            executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductById() throws IOException {
         baseUrl = baseUrl.concat("/api/product/3");
         Request request = new Request.Builder()

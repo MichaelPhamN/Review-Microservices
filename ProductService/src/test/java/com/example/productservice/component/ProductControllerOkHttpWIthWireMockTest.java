@@ -1,5 +1,6 @@
 package com.example.productservice.component;
 
+import com.example.productservice.controller.ProductController;
 import com.github.tomakehurst.wiremock.WireMockServer;
 
 import okhttp3.OkHttpClient;
@@ -18,7 +19,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.util.StreamUtils.copyToString;
 
 public class ProductControllerOkHttpWIthWireMockTest {
     private WireMockServer wireMockServer;
@@ -60,7 +63,13 @@ public class ProductControllerOkHttpWIthWireMockTest {
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-                        .withBody("{\"productId\":3,\"productName\":\"Pixel 5\",\"productDescription\":\"Manufactured by Google\",\"productType\":\"phone\",\"price\":1099.99,\"quantity\":4}")));
+                        .withBody(
+                                copyToString(
+                                        ProductController.class
+                                                .getClassLoader()
+                                                .getResourceAsStream("mock/GetProduct.json"),
+                                        defaultCharset()
+                                ))));
     }
 }
 //https://www.baeldung.com/okhttp-post

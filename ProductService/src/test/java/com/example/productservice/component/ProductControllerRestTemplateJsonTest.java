@@ -18,10 +18,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -30,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class ProductControllerRestTemplateTest {
+public class ProductControllerRestTemplateJsonTest {
     @LocalServerPort
     private int port;
 
@@ -58,36 +62,16 @@ public class ProductControllerRestTemplateTest {
     @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
             "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testAddProduct() {
+    public void testAddProductMappingJackson2HttpMessageConverter() {
         baseUrl = baseUrl.concat(URIConstant.POST);
         ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
-        long productId = restTemplate.postForObject(baseUrl, productRequest, Long.class);
-        assertEquals(1, productId);
-        assertAll(
-            () -> assertNotNull(h2Repository.findAll().get(0)),
-            () -> assertEquals(1, h2Repository.findAll().get(0).getProductId()),
-            () -> assertEquals("iPhone X", h2Repository.findAll().get(0).getProductName()),
-            () -> assertEquals("Manufactured by Apple", h2Repository.findAll().get(0).getProductDescription()),
-            () -> assertEquals("phone", h2Repository.findAll().get(0).getProductType()),
-            () -> assertEquals(1499.99, h2Repository.findAll().get(0).getPrice()),
-            () -> assertEquals(6, h2Repository.findAll().get(0).getQuantity())
-        );
-    }
-
-    @Test
-    @Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
-            "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-    @Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    public void testAddProductPassingJsonType() throws JsonProcessingException {
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        baseUrl = baseUrl.concat(URIConstant.POST);
-
-        ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
-
-        //Clarify that passing a json type data
-        HttpEntity<String> request = new HttpEntity<>(convertObjectToJson(productRequest), headers);
+        restTemplate.setMessageConverters(getJsonMessageConverters());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpEntity<ProductRequest> request = new HttpEntity<>(productRequest, headers);
 
         long productId = restTemplate.postForObject(baseUrl, request, Long.class);
+
         assertEquals(1, productId);
         assertAll(
                 () -> assertNotNull(h2Repository.findAll().get(0)),
@@ -98,6 +82,12 @@ public class ProductControllerRestTemplateTest {
                 () -> assertEquals(1499.99, h2Repository.findAll().get(0).getPrice()),
                 () -> assertEquals(6, h2Repository.findAll().get(0).getQuantity())
         );
+    }
+
+    private List<HttpMessageConverter<?>> getJsonMessageConverters() {
+        List<HttpMessageConverter<?>> converters = new ArrayList<>();
+        converters.add(new MappingJackson2HttpMessageConverter());
+        return converters;
     }
 
     @Test

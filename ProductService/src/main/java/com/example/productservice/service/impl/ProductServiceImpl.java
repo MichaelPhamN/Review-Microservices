@@ -304,8 +304,8 @@ public class ProductServiceImpl implements ProductService {
         return isExisted;
     }
 
-    @Override
-    public void reduceQuantity(long productId, long quantity) {
-
-    }
+//    @Override
+//    public void reduceQuantity(long productId, long quantity) {
+//
+//    }
 }

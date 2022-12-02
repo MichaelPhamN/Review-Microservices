@@ -34,6 +34,7 @@ public class ProductControllerMockMvcV2Test {
     private MockMvc mockMvc;
 
     @Test
+    @Sql(scripts= "/scripts/schema.sql", executionPhase= Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts= "/scripts/insert.sql", executionPhase= Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts= "/scripts/delete.sql", executionPhase= Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProducts() throws Exception {
@@ -63,6 +64,7 @@ public class ProductControllerMockMvcV2Test {
     }
 
     @Test
+    @Sql(scripts= "/scripts/schema.sql", executionPhase= Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts= "/scripts/insert.sql", executionPhase= Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts= "/scripts/delete.sql", executionPhase= Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testGetProductById() throws Exception {
@@ -86,6 +88,7 @@ public class ProductControllerMockMvcV2Test {
     }
 
     @Test
+    @Sql(scripts= "/scripts/schema.sql", executionPhase= Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     @Sql(scripts= "/scripts/delete.sql", executionPhase= Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void testAddProduct() throws Exception{
         RequestBuilder requestBuilder = MockMvcRequestBuilders
