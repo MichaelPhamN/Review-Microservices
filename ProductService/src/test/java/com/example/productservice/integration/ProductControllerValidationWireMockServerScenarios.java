@@ -1,4 +1,4 @@
-package com.example.productservice.component;
+package com.example.productservice.integration;
 
 import com.example.productservice.model.ProductResponse;
 import com.github.tomakehurst.wiremock.WireMockServer;

@@ -45,7 +45,7 @@ spring:
       hibernate.format_sql: true
 ```
 
-Step 4: Integration testing with RestTemplate
+Step 4: component test with RestTemplate (Happy Path / Green Path)
 - Setup test environment
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -80,6 +80,9 @@ public class ProductControllerRestTemplateTest {
 public interface TestH2Repository extends JpaRepository<Product, Long> {
 }
 ```
+
+1. Send a real object
+
 - Test get products
 ```java
 @Test
@@ -181,3 +184,95 @@ public void testAddProduct() {
 }
 ```
 
+2. Send a json object
+
+- Test post a product
+```java
+@Test
+@Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+        "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+public void testAddProductMappingJackson2HttpMessageConverter() {
+    baseUrl = baseUrl.concat(URIConstant.POST);
+    ProductRequest productRequest = new ProductRequest("iPhone X","Manufactured by Apple","phone",1499.99,6);
+    restTemplate.setMessageConverters(getJsonMessageConverters());
+    HttpHeaders headers = new HttpHeaders();
+    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+    HttpEntity<ProductRequest> request = new HttpEntity<>(productRequest, headers);
+
+    long productId = restTemplate.postForObject(baseUrl, request, Long.class);
+
+    assertEquals(1, productId);
+    assertAll(
+    () -> assertNotNull(h2Repository.findAll().get(0)),
+    () -> assertEquals(1, h2Repository.findAll().get(0).getProductId()),
+    () -> assertEquals("iPhone X", h2Repository.findAll().get(0).getProductName()),
+    () -> assertEquals("Manufactured by Apple", h2Repository.findAll().get(0).getProductDescription()),
+    () -> assertEquals("phone", h2Repository.findAll().get(0).getProductType()),
+    () -> assertEquals(1499.99, h2Repository.findAll().get(0).getPrice()),
+    () -> assertEquals(6, h2Repository.findAll().get(0).getQuantity())
+    );
+    }
+
+private List<HttpMessageConverter<?>> getJsonMessageConverters() {
+    List<HttpMessageConverter<?>> converters = new ArrayList<>();
+    converters.add(new MappingJackson2HttpMessageConverter());
+    return converters;
+}
+```
+
+Step 5: component test with RestTemplate (Throw Exception / Red Path)
+
+- Test get product by Id
+```java
+@Test
+@Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+        "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(statements = "INSERT INTO PRODUCT (product_id, product_name, product_description, product_type, price, quantity) VALUES " +
+        "(1,'iPhone X','Manufactured by Apple','phone',1499.99,6), " +
+        "(2,'Galaxy S10','Manufactured by Samsung','phone',1299.99,3), " +
+        "(3,'Pixel 5','Manufactured by Google','phone',1099.99,4), " +
+        "(4,'Dell XPS 15','Manufactured by Dell','laptop',1799.99,6), " +
+        "(5,'HP Envy 13','Manufactured by HP','laptop',1299.99,2), " +
+        "(6,'Lenovo IdeaCentre 5i Gaming Desktop','Manufactured by Lenovo','desktop',999.99,6)",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+public void testGetProductById() {
+    RestClientResponseException exception =  null;
+    try {
+        restTemplate.getForEntity(baseUrl + "/api/product/-3", ProductResponse.class);
+    } catch (RestClientResponseException e) {
+        exception = e;
+    }
+
+    assertNotNull(exception);
+    assertEquals(HttpStatus.BAD_REQUEST.value(), exception.getRawStatusCode());
+    assertEquals("Product data is invalid.", getMessage(exception.getMessage()));
+}
+```
+- Test post a product
+```java
+@Test
+@Sql(statements = "CREATE TABLE IF NOT EXISTS PRODUCT(product_id BIGINT PRIMARY KEY, product_name VARCHAR(255), " +
+        "product_description VARCHAR(255), product_type VARCHAR(255), price DOUBLE, quantity BIGINT)", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(statements = "DROP TABLE PRODUCT", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+public void testAddProduct() {
+    RestClientResponseException exception =  null;
+    try {
+        ProductRequest productRequest = new ProductRequest("","Manufactured by Apple","",0,0);
+        restTemplate.postForEntity(baseUrl + "/api/product", productRequest, Long.class);
+    } catch (RestClientResponseException e) {
+        exception = e;
+    }
+
+    assertNotNull(exception);
+    assertEquals(HttpStatus.BAD_REQUEST.value(), exception.getRawStatusCode());
+    assertEquals("Product data is invalid.", getMessage(exception.getMessage()));
+}
+
+private String getMessage(String message) {
+    int start = message.indexOf("message") + 10;
+    int end = message.indexOf("description") - 3;
+    return message.substring(start, end);
+}
+```
